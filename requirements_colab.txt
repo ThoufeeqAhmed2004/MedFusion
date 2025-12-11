@@ -1,0 +1,7 @@
+# Dependencies for Google Colab
+# torch and torchvision are pre-installed in Colab with CUDA support.
+# numpy is also pre-installed.
+
+segment-anything
+opencv-python-headless
+matplotlib

@@ -1,0 +1,7 @@
+segment-anything==1.0
+torch==2.1.0
+torchvision==0.16.0
+numpy==1.26.0
+# nibabel==5.1.0 # Removing as we are using JPGs now
+opencv-python==4.8.0.76
+matplotlib==3.8.0 # useful for visualization if needed
