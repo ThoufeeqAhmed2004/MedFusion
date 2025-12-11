@@ -5,6 +5,43 @@ MedFusion - Adaptive Foundation Models for Medical Image Segmentation, seeks to 
 
 You can run this project using either `uv` (for local development) or `Docker` (for a containerized environment).
 
+## Dataset Structure
+
+The project expects the dataset to be organized in the following YOLO-compatible structure:
+
+```
+data/
+└── KIDNEY_CT/
+    ├── data.yaml       # Class names and number of classes
+    ├── train/
+    │   ├── images/     # Training images (.jpg/.png)
+    │   └── labels/     # YOLO-format labels (.txt)
+    ├── valid/
+    │   ├── images/
+    │   └── labels/
+    └── test/
+        ├── images/
+        └── labels/
+```
+
+### Label Format
+Labels should be in **YOLO format** (`.txt` files matching image names):
+```
+<class_id> <x_center> <y_center> <width> <height>
+```
+*   Coordinates are normalized (0-1).
+*   `class_id`: Integer representing the class index (e.g., 0 for Kidney/Tas_Var).
+
+### Example `data.yaml`
+```yaml
+names:
+- Tas_Var
+nc: 1
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+```
+
 ### Option 1: Local Development with uv
 
 [uv](https://github.com/astral-sh/uv) is an extremely fast Python package installer and resolver.
