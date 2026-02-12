@@ -70,9 +70,29 @@ test: ../test/images
     ```
 
 5.  **Run the application**:
+    
+    You can now select the dataset using the `--dataset` argument.
+
+    **Default (Kidney Stone):**
     ```bash
-    python src/main.py
+    uv run src/main.py --dataset Kidney_Stone
     ```
+
+    **Liver Tumor:**
+    ```bash
+    uv run src/main.py --dataset Liver_Tumor
+    ```
+    
+    **Single Image Inference:**
+    ```bash
+    uv run src/main.py --image_path /path/to/image.jpg --dataset Kidney_Stone
+    ```
+    
+    **Options:**
+    *   `--dataset`: `Kidney_Stone` (default) or `Liver_Tumor`
+    *   `--num_images`: Number of images to process (default: 5)
+    *   `--image_path`: Path to a single image file (optional)
+    *   `--device`: `cuda` or `cpu`
 
 ### Option 2: Docker Development
 
@@ -86,7 +106,6 @@ This method ensures a consistent environment and is recommended for compatibilit
 2.  **Run the container**:
     We mount the current directory (`$(pwd)`) to `/app` in the container so you can edit files locally and run them immediately. GPU support is enabled with `--gpus all`.
 
-    ```bash
     **For GPU support (Linux/Windows with NVIDIA GPU):**
     ```bash
     docker run --gpus all -it -v $(pwd):/app medfusion /bin/bash
@@ -114,6 +133,11 @@ MedFusion is compatible with Google Colab.
 
 3.  **Run the Inference**:
     ```python
-    !python src/main.py
+    !python src/main.py --dataset Kidney_Stone
     ```
     *Note: Objects and outputs will be saved to the `output/` directory in the Colab file explorer.*
+
+    **For Liver Tumor:**
+    ```python
+    !python src/main.py --dataset Liver_Tumor
+    ```
