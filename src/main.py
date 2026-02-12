@@ -146,7 +146,7 @@ def main():
         # Check if data.yaml exists to confirm class names, or hardcode common ones
         CLASS_NAMES = ['stone'] 
     elif args.dataset == "Liver_Tumor":
-        CLASS_NAMES = ['Liver']
+        CLASS_NAMES = ['Tumor']
     else:
         CLASS_NAMES = ['Object']
     
