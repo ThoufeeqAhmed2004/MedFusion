@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from torch.utils.data import Dataset
 
-class KidneyDataset(Dataset):
+class MedicalDataset(Dataset):
     def __init__(self, root_dir, split='train', logger=None):
         """
         Args:

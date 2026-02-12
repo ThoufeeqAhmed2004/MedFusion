@@ -3,7 +3,7 @@ import csv
 import numpy as np
 import urllib.request
 from datetime import datetime
-from dataloader import KidneyDataset
+from dataloader import MedicalDataset
 from model import SAMWrapper
 from utils import setup_logger, save_mask, plot_metrics
 import torch
@@ -13,8 +13,13 @@ class Config:
     Configuration for MedFusion SAM Inference.
     Change the values here to adjust the run settings.
     """
+    # Dataset Selection
+    # DATASET_NAME = "KIDNEY_CT" 
+    DATASET_NAME = "Liver_Tumor"
+    
     # Directory paths
-    DATA_DIR = "/Users/sundar/Projects/MedFusion/data/KIDNEY_CT"
+    # Assumes data is in project_root/data/{DATASET_NAME}
+    DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", DATASET_NAME)
     BASE_OUTPUT_DIR = "output"
     
     # Model Config
@@ -82,7 +87,7 @@ def main():
             return
 
     # Initialize Dataset
-    dataset = KidneyDataset(root_dir=Config.DATA_DIR, split="train", logger=logger)
+    dataset = MedicalDataset(root_dir=Config.DATA_DIR, split="train", logger=logger)
     
     if len(dataset) == 0:
         logger.error("No images found in dataset. Exiting.")
@@ -102,7 +107,13 @@ def main():
 
     # Run Inference
     logger.info("Starting inference on TRAIN split...")
-    CLASS_NAMES = ['Tas_Var']
+    
+    if Config.DATASET_NAME == "KIDNEY_CT":
+        CLASS_NAMES = ['Tas_Var']
+    elif Config.DATASET_NAME == "Liver_Tumor":
+        CLASS_NAMES = ['Liver']
+    else:
+        CLASS_NAMES = ['Object']
     
     for i in range(min(len(dataset), Config.NUM_IMAGES_TO_PROCESS)):
         data = dataset[i]

@@ -14,11 +14,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-ENV PATH="/root/.cargo/bin:$PATH"
-
-# Set working directory
-WORKDIR /app
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Create virtual environment
 RUN uv venv /opt/venv
@@ -28,5 +25,8 @@ ENV PATH="/opt/venv/bin:$PATH"
 COPY requirements.txt .
 RUN uv pip install -r requirements.txt
 
-# The rest of the code is mounted via volume for development
+# Copy source code
+COPY . .
+
+# The rest of the code is also accessible via volume if mounted
 # CMD ["/bin/bash"]

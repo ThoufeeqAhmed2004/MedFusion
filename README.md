@@ -87,7 +87,14 @@ This method ensures a consistent environment and is recommended for compatibilit
     We mount the current directory (`$(pwd)`) to `/app` in the container so you can edit files locally and run them immediately. GPU support is enabled with `--gpus all`.
 
     ```bash
+    **For GPU support (Linux/Windows with NVIDIA GPU):**
+    ```bash
     docker run --gpus all -it -v $(pwd):/app medfusion /bin/bash
+    ```
+
+    **For macOS (Apple Silicon/Intel) or CPU-only:**
+    ```bash
+    docker run -it -v $(pwd):/app medfusion /bin/bash
     ```
 
 ### Option 3: Google Colab
