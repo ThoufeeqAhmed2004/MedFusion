@@ -107,12 +107,63 @@ def main():
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             filename = os.path.basename(args.image_path)
             
+            # Try to find label file
+            # Priority 1: Same directory, same name, .txt extension
+            label_path_same_dir = os.path.splitext(args.image_path)[0] + '.txt'
+            # Priority 2: Parallel 'labels' directory (if current is 'images')
+            label_path_parallel = args.image_path.replace('images', 'labels').rsplit('.', 1)[0] + '.txt'
+            
+            label_path = None
+            if os.path.exists(label_path_same_dir):
+                label_path = label_path_same_dir
+            elif os.path.exists(label_path_parallel):
+                label_path = label_path_parallel
+            
+            boxes = None
+            class_ids = None
+            
+            if label_path:
+                logger.info(f"Found label file: {label_path}")
+                try:
+                    boxes_list = []
+                    class_ids_list = []
+                    height, width, _ = image.shape
+                    
+                    with open(label_path, 'r') as f:
+                        lines = f.readlines()
+                        for line in lines:
+                            parts = line.strip().split()
+                            if len(parts) >= 5:
+                                cls_id = int(parts[0])
+                                x_center = float(parts[1])
+                                y_center = float(parts[2])
+                                w = float(parts[3])
+                                h = float(parts[4])
+                                
+                                # Convert YOLO format (normalized) to [x1, y1, x2, y2] (pixel)
+                                x1 = int((x_center - w / 2) * width)
+                                y1 = int((y_center - h / 2) * height)
+                                x2 = int((x_center + w / 2) * width)
+                                y2 = int((y_center + h / 2) * height)
+                                
+                                boxes_list.append([x1, y1, x2, y2])
+                                class_ids_list.append(cls_id)
+                    
+                    if boxes_list:
+                        boxes = np.array(boxes_list, dtype=np.float32)
+                        class_ids = class_ids_list
+                        logger.info(f"Loaded {len(boxes)} boxes from label file.")
+                except Exception as e:
+                    logger.error(f"Failed to parse label file: {e}")
+            else:
+                logger.info("No label file found. Running segmentation only.")
+
             # Create a single-item dataset-like list
             dataset = [{
                 'image': image, 
                 'filename': filename, 
-                'boxes': None, 
-                'class_ids': None
+                'boxes': boxes, 
+                'class_ids': class_ids
             }]
             logger.info(f"Running inference on single image: {args.image_path}")
             
