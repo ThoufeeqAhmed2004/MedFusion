@@ -3,19 +3,15 @@ const fileInput = document.getElementById('imageUpload');
 const canvasWrapper = document.getElementById('canvasWrapper');
 const canvas = document.getElementById('imageCanvas');
 const ctx = canvas.getContext('2d');
-const clearBoxBtn = document.getElementById('clearBoxBtn');
 const processBtn = document.getElementById('processBtn');
 const processLoader = document.getElementById('processLoader');
 const btnText = document.querySelector('.btn-text');
 const errorMsg = document.getElementById('errorMessage');
 
-const emptyState = document.getElementById('emptyState');
 const stepOriginal = document.getElementById('stepOriginal');
-const stepPrompt = document.getElementById('stepPrompt');
 const stepResult = document.getElementById('stepResult');
 
 const resOriginal = document.getElementById('resOriginal');
-const resPrompt = document.getElementById('resPrompt');
 const resSegmented = document.getElementById('resSegmented');
 
 let currentFile = null;
@@ -28,7 +24,7 @@ let startY = 0;
 let boxCoords = null; // [x1, y1, x2, y2] relative to original image size
 
 // API Config
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '';
 
 // Upload Handlers
 uploadContainer.addEventListener('click', () => fileInput.click());
@@ -166,9 +162,19 @@ canvas.addEventListener('mouseup', (e) => {
 });
 
 // Controls
-clearBoxBtn.addEventListener('click', () => {
+const resetScanBtn = document.getElementById('resetScanBtn');
+
+resetScanBtn.addEventListener('click', () => {
+    currentFile = null;
+    currentImage = null;
     boxCoords = null;
-    redrawCanvas();
+    
+    canvasWrapper.style.display = 'none';
+    uploadContainer.style.display = 'flex';
+    document.getElementById('resultsSection').style.display = 'none';
+    errorMsg.style.display = 'none';
+    
+    fileInput.value = '';
 });
 
 function showError(msg) {

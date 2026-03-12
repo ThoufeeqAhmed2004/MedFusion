@@ -3,6 +3,9 @@ import cv2
 import json
 import uuid
 import numpy as np
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from datetime import datetime
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,9 +31,11 @@ app.add_middleware(
 )
 
 # Configuration
-CHECKPOINT_PATH = "sam_vit_h_4b8939.pth"
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CHECKPOINT_PATH = os.path.join(PROJECT_ROOT, "sam_vit_h_4b8939.pth")
 MODEL_TYPE = "vit_h"
-OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "output", "web")
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "output", "web")
+FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
 # Create output dir if it doesn't exist
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -41,9 +46,10 @@ app.mount("/static", StaticFiles(directory=OUTPUT_DIR), name="static")
 # Global variables for model and logger
 sam_model = None
 logger = None
+executor = ThreadPoolExecutor(max_workers=4)
 
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     global sam_model, logger
     logger = setup_logger(OUTPUT_DIR)
     logger.info("Starting up FastAPI application...")
@@ -61,10 +67,19 @@ async def startup_event():
             logger.info("SAM model loaded successfully.")
         except Exception as e:
             logger.error(f"Error loading model: {e}")
+            
+    yield
+    
+    # Cleanup on shutdown
+    executor.shutdown(wait=True)
+    logger.info("Shutting down FastAPI application...")
 
-@app.get("/")
-def read_root():
-    return {"status": "API is running", "model_loaded": sam_model is not None}
+# Assign lifespan
+app.router.lifespan_context = lifespan
+
+@app.get("/health")
+def read_health():
+    return {"status": "ok", "model_loaded": sam_model is not None, "checkpoint_path": CHECKPOINT_PATH}
 
 @app.post("/api/segment")
 async def segment_image(
@@ -101,6 +116,7 @@ async def segment_image(
         boxes = None
         class_ids = None
         class_names = ["Object"]
+        is_manual_box = False
         
         # Parse box prompt if provided
         class_name = "Kidney Stone"  # Default hardcoded for now, or infer from user selection
@@ -113,16 +129,66 @@ async def segment_image(
                     class_ids = [0]
                     # The frontend could pass the target class, but since we know it's Kidney Stone
                     class_names = [class_name]
+                    is_manual_box = True
                     logger.info(f"Box prompt received: {boxes}")
             except Exception as e:
                 logger.warning(f"Failed to parse box: {box}. Error: {e}")
 
+        # If not manually drawn, try to find ground truth labels
+        if not is_manual_box and image.filename:
+            base_name = os.path.splitext(image.filename)[0]
+            data_dir = os.path.join(PROJECT_ROOT, "data")
+            import pathlib
+            for path in pathlib.Path(data_dir).rglob(f"{base_name}.txt"):
+                if 'labels' in path.parts:
+                    logger.info(f"Found GT label file: {path}")
+                    try:
+                        boxes_list = []
+                        class_ids_list = []
+                        height, width, _ = img_rgb.shape
+                        with open(path, 'r') as f:
+                            for line in f.readlines():
+                                parts = line.strip().split()
+                                if len(parts) >= 5:
+                                    cls_id = int(parts[0])
+                                    w = float(parts[3])
+                                    h = float(parts[4])
+                                    x_center = float(parts[1])
+                                    y_center = float(parts[2])
+                                    
+                                    x1 = int((x_center - w / 2) * width)
+                                    y1 = int((y_center - h / 2) * height)
+                                    x2 = int((x_center + w / 2) * width)
+                                    y2 = int((y_center + h / 2) * height)
+                                    
+                                    boxes_list.append([x1, y1, x2, y2])
+                                    class_ids_list.append(cls_id)
+                        if boxes_list:
+                            boxes = np.array(boxes_list, dtype=np.float32)
+                            class_ids = class_ids_list
+                            if "Kidney_Stone" in str(path):
+                                class_names = ["stone"]
+                            elif "Liver_Tumor" in str(path):
+                                class_names = ["Tumor"]
+                            logger.info(f"Loaded {len(boxes)} GT boxes from {path}")
+                    except Exception as e:
+                        logger.warning(f"Failed to parse GT label: {e}")
+                    break
+
         # Run Segmentation
         logger.info(f"Processing image {image.filename}...")
         try:
-            if boxes is not None:
-                # With Box Prompt
-                masks, scores = sam_model.predict_prompt(img_rgb, box=boxes[0])
+            loop = asyncio.get_event_loop()
+            if is_manual_box:
+                # With Box Prompt (Run in executor to avoid blocking the event loop)
+                masks, scores = await loop.run_in_executor(
+                    executor, 
+                    sam_model.predict_prompt, 
+                    img_rgb, 
+                    None, 
+                    None, 
+                    boxes[0]
+                )
                 logger.info(f"Generated predictions based on prompt. Scores: {scores}")
                 # predict_prompt returns multiple masks with scores, we convert them nicely for save_mask
                 # if mask is boolean array of shape (N, H, W)
@@ -134,8 +200,12 @@ async def segment_image(
                 
                 result_masks = mask_list
             else:
-                # Automatic Segmentation
-                masks = sam_model.generate_masks(img_rgb)
+                # Automatic Segmentation (Run in executor)
+                masks = await loop.run_in_executor(
+                    executor,
+                    sam_model.generate_masks,
+                    img_rgb
+                )
                 num_masks = len(masks)
                 logger.info(f"Generated {num_masks} auto-masks.")
                 result_masks = masks
@@ -178,3 +248,6 @@ async def segment_image(
     except Exception as e:
         logger.error(f"File upload error: {e}")
         return JSONResponse(status_code=500, content={"error": "Failed to process image."})
+
+# Mount the frontend directory at the root path, serving index.html automatically for "/"
+app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")

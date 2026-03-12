@@ -3,15 +3,30 @@ import json
 import os
 
 url = 'http://localhost:8000/api/segment'
-image_path = r'd:\MedFusion\MedFusion\data\Kidney_Stone\train\images\1-3-46-670589-33-1-63700700749865510700001-5062181202000819812_png_jpg.rf.269520bcaab75e008e00f57f3fa98851.jpg'
+health_url = 'http://localhost:8000/health'
 
-if not os.path.exists(image_path):
-    print("Image not found:", image_path)
+# Find the first image in Kidney_Stone/train/images
+data_dir = os.path.join(os.path.dirname(__file__), 'data', 'Kidney_Stone', 'train', 'images')
+images = [f for f in os.listdir(data_dir) if f.endswith('.jpg') or f.endswith('.png')] if os.path.exists(data_dir) else []
+
+if not images:
+    print("No images found in the dataset to test with. Looking at:", data_dir)
     exit(1)
 
+image_path = os.path.join(data_dir, images[0])
+print(f"Testing with image: {image_path}")
+
 files = {'image': open(image_path, 'rb')}
-# Test with a bounding box prompt
-data = {'box': json.dumps([50, 50, 200, 200])}
+# Test without a bounding box prompt to verify auto-GT label detection
+data = {}
+
+print("Checking health...")
+try:
+    response = requests.get(health_url)
+    print("Health Status:", response.status_code)
+    print("Health Response:", response.json())
+except Exception as e:
+    print("Health Check Error:", e)
 
 print("Sending request to server...")
 try:

@@ -16,25 +16,6 @@
     <header class="hero">
         <div class="hero-content">
             <h1 class="title interactive-title">MedFusion</h1>
-            <div class="description-box">
-                <p class="description">
-                    Welcome to <strong>MedFusion</strong>, an advanced medical tool leveraging the power of Foundation
-                    Models.
-                    MedFusion is built on top of the revolutionary <strong>Segment Anything Model (SAM)</strong>. Unlike
-                    traditional models that are
-                    trained for very specific tasks with a predefined set of classes, SAM brings zero-shot
-                    generalization capabilities to clinical diagnostics.
-                    This means it can accurately identify and segment boundaries across a wide variety of medical scans
-                    without requiring retraining.
-                </p>
-                <p class="description">
-                    <strong>How it works:</strong> Our tailored implementation pipeline dynamically integrates user
-                    prompts. By simply uploading a scan and drawing a bounding box over a region of interest, the model
-                    adaptively understands the context and accurately isolates objects like <strong>Kidney
-                        Stones</strong> or Liver Tumors with high precision. This interactive process assists medical
-                    professionals by providing a responsive, adaptable approach to medical image analysis.
-                </p>
-            </div>
         </div>
         <div class="hero-background"></div>
     </header>
@@ -68,7 +49,7 @@
                     <canvas id="imageCanvas"></canvas>
                 </div>
                 <div class="controls">
-                    <button id="clearBoxBtn" class="secondary-btn">Clear Box</button>
+                    <button id="resetScanBtn" class="secondary-btn">Upload New Scan</button>
                     <button id="processBtn" class="primary-btn">
                         <span class="btn-text">Generate Segmentation</span>
                         <div class="loader" id="processLoader" style="display: none;"></div>
