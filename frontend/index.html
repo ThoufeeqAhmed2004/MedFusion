@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedFusion </title>
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- Header Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1 class="title interactive-title">MedFusion</h1>
+            <div class="description-box">
+                <p class="description">
+                    Welcome to <strong>MedFusion</strong>, an advanced medical tool leveraging the power of Foundation
+                    Models.
+                    MedFusion is built on top of the revolutionary <strong>Segment Anything Model (SAM)</strong>. Unlike
+                    traditional models that are
+                    trained for very specific tasks with a predefined set of classes, SAM brings zero-shot
+                    generalization capabilities to clinical diagnostics.
+                    This means it can accurately identify and segment boundaries across a wide variety of medical scans
+                    without requiring retraining.
+                </p>
+                <p class="description">
+                    <strong>How it works:</strong> Our tailored implementation pipeline dynamically integrates user
+                    prompts. By simply uploading a scan and drawing a bounding box over a region of interest, the model
+                    adaptively understands the context and accurately isolates objects like <strong>Kidney
+                        Stones</strong> or Liver Tumors with high precision. This interactive process assists medical
+                    professionals by providing a responsive, adaptable approach to medical image analysis.
+                </p>
+            </div>
+        </div>
+        <div class="hero-background"></div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace flex-col">
+
+        <!-- Upload & Canvas Section -->
+        <section class="panel interaction-panel" id="uploadSection">
+            <h2>1. Upload Scan</h2>
+            <p class="instruction">Upload your CT/MRI scan to start the segmentation process.</p>
+
+            <div class="upload-container" id="uploadContainer">
+                <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/jpg" hidden>
+                <div class="upload-btn" id="uploadBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Browse Scan</span>
+                </div>
+                <p class="drag-text">or drag and drop here</p>
+            </div>
+
+            <!-- Canvas Wrapper (Hidden initially) -->
+            <div class="canvas-wrapper" id="canvasWrapper" style="display: none;">
+                <p class="instruction">Draw a bounding box around the target to isolate it, then generate.</p>
+                <div class="canvas-container vanilla-gradient" id="canvasContainer">
+                    <canvas id="imageCanvas"></canvas>
+                </div>
+                <div class="controls">
+                    <button id="clearBoxBtn" class="secondary-btn">Clear Box</button>
+                    <button id="processBtn" class="primary-btn">
+                        <span class="btn-text">Generate Segmentation</span>
+                        <div class="loader" id="processLoader" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Error messages -->
+            <div id="errorMessage" class="error-msg"></div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="panel results-panel" id="resultsSection" style="display: none;">
+            <h2>2. Segmentation Results</h2>
+            <p class="instruction">Compare the original scan with the adaptive segmentation overlay.</p>
+
+            <div class="results-grid comparison-mode" id="resultsGrid">
+
+                <!-- Only Two Steps Now -->
+                <div class="step-card" id="stepOriginal">
+                    <div class="step-badge">Original</div>
+                    <h3>Original Scan</h3>
+                    <div class="img-wrapper">
+                        <img id="resOriginal" src="" alt="Original Scan">
+                    </div>
+                </div>
+
+                <div class="step-card" id="stepResult">
+                    <div class="step-badge vibrant-badge">Segmented</div>
+                    <h3>Final Segmentation</h3>
+                    <div class="img-wrapper">
+                        <img id="resSegmented" src="" alt="Segmented Result">
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
